@@ -14,6 +14,7 @@ endif
 
 SERVICE_NAME = app
 CONTAINER_NAME = cybulde-data-preparation-container
+HYDRA_FULL_ERROR = 1
 
 
 DIRS_TO_VALIDATE = cybulldetection

@@ -1,0 +1,6 @@
+defaults:
+  - ghc_dataset_reader_schema
+
+dataset_dir: ${data_local_save_dir}/ghc  # data dir comes from data_processing_config_yaml
+dataset_name: ghc
+val_split_ratio: 0.3

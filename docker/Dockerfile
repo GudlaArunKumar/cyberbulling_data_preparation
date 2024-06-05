@@ -46,15 +46,18 @@ RUN poetry config virtualenvs.create false \
     && poetry install && cp poetry.lock ${BUILD_POETRY_LOCK} \
     && rm -rf ${HOME}/.cache/*
 
+
 USER root
 COPY ./docker/scripts/* /
 RUN chown -R ${USER_NAME} /*.sh && chmod +x /*.sh
+RUN chown -R ${USER_NAME} ${HOME}/.local
 USER ${USER_NAME}
 
 RUN git config --global user.email "arunkumarakansha@gmail.com" \
     && git config --global user.name "GudlaArunKumar"
 
 RUN python3.10 -m nltk.downloader stopwords && python3.10 -m nltk.downloader punkt
+
 
 COPY . /app/
 CMD ["/startup-script.sh"]
