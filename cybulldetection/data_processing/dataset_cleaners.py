@@ -138,7 +138,7 @@ class CharacterLimiterDatasetCleaner(DatasetCleaner):
     def clean_words(self, words: list[str]) -> list[str]:
         text = " ".join(words)
         return self.clean_text(text).split()
-
+    
 
 class DatasetCleanerManager:
     def __init__(self, dataset_cleaners: dict[str, DatasetCleaner]):

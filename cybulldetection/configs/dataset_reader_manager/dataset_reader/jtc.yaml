@@ -3,4 +3,4 @@ defaults:
 
 dataset_dir: ${data_local_save_dir}/jigsaw-toxic-comments  
 dataset_name: jtc
-val_split_ratio: 0.06     # dataset is large
+val_split_ratio: 0.03     # dataset is large

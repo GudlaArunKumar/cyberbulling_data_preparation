@@ -13,7 +13,7 @@ else
 endif
 
 SERVICE_NAME = app
-CONTAINER_NAME = cybulde-data-preparation-container
+CONTAINER_NAME = cybulde-data-processing-container
 HYDRA_FULL_ERROR = 1
 
 
@@ -21,18 +21,42 @@ DIRS_TO_VALIDATE = cybulldetection
 DOCKER_COMPOSE_RUN = $(DOCKER_COMPOSE_COMMAND) run --rm $(SERVICE_NAME)
 DOCKER_COMPOSE_EXEC = $(DOCKER_COMPOSE_COMMAND) exec $(SERVICE_NAME)
 
+# local docker image name (from docker-compose.yaml)
+LOCAL_DOCKER_IMAGE_NAME = cybulde-data-processing
+
+
+# artifact regsitry image name
+GCP_DOCKER_IMAGE_NAME = europe-west4-docker.pkg.dev/end-to-end-ml-419116/cybull-detection/cybull-data-processing
+# generate unique id tag := restricts it to same tag for whole makefile
+GCP_DOCKER_IMAGE_TAG := $(strip $(shell uuidgen))
+
 export  # export here is to export ENV variables to whole project
 
 # Returns true if the stem is a non-empty environment variable, or else raises an error.
 guard-%:
 	@#$(or ${$*}, $(error $* is not set))
 
-## Call entrypoint
-prepare-dataset: up
-	$(DOCKER_COMPOSE_EXEC) python ./cybulldetection/prepare_dataset.py
+## Generate final config. CONFIG_NAME=<config_name> has to be provided. For overrides use: OVERRIDES=<overrides>
+generate-final-config: up guard-CONFIG_NAME
+	$(DOCKER_COMPOSE_EXEC) python ./cybulldetection/generate_final_config.py --config-name $${CONFIG_NAME} --overrides docker_image_name=$(GCP_DOCKER_IMAGE_NAME) docker_image_tag=$(GCP_DOCKER_IMAGE_TAG) $${OVERRIDES}
 
-process-data: up
+## Generate final data processing config. CONFIG_NAME is provided manually. For overrides use: OVERRIDES=<overrides>
+generate-final-data-processing-config: up 
+	$(DOCKER_COMPOSE_EXEC) python ./cybulldetection/generate_final_config.py --config-name data_processing_config --overrides docker_image_name=$(GCP_DOCKER_IMAGE_NAME) docker_image_tag=$(GCP_DOCKER_IMAGE_TAG) $${OVERRIDES}
+
+## Processes raw data, genrates config and push docker image
+process-data: generate-final-data-processing-config push
 	$(DOCKER_COMPOSE_EXEC) python ./cybulldetection/process_data.py
+
+## Processes raw data, for local debugging
+local-process-data: generate-final-data-processing-config 
+	$(DOCKER_COMPOSE_EXEC) python ./cybulldetection/process_data.py
+
+## Push local docker image to GCP artifact registery
+push: build
+	gcloud auth configure-docker --quiet europe-west4-docker.pkg.dev
+	docker tag $(LOCAL_DOCKER_IMAGE_NAME):latest "$(GCP_DOCKER_IMAGE_NAME):$(GCP_DOCKER_IMAGE_TAG)"
+	docker push "$(GCP_DOCKER_IMAGE_NAME):$(GCP_DOCKER_IMAGE_TAG)"
 
 ## Starts jupyter lab
 notebook: up
@@ -100,6 +124,8 @@ exec-in: up
 
 .DEFAULT_GOAL := help
 
+
+# below is for printing and formatting make command
 # Inspired by <http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html>
 # sed script explained:
 # /^##/:

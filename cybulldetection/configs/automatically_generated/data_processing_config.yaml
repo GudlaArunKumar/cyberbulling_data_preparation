@@ -1,0 +1,104 @@
+version: v3
+data_local_save_dir: ./data/raw
+dvc_remote_repo: https://github.com/GudlaArunKumar/cyberbulling_detection_data.git
+dvc_data_folder: data/raw
+github_user_name: GudlaArunKumar
+github_access_token_secret_id: cybull-data-github-access-token
+infrastructure:
+  project_id: end-to-end-ml-419116
+  zone: europe-west4-b
+  network: default
+dataset_reader_manager:
+  _target_: cybulldetection.data_processing.dataset_readers.DatasetReaderManager
+  dataset_readers:
+    ghc:
+      _target_: cybulldetection.data_processing.dataset_readers.GHCDatasetReader
+      dataset_dir: ./data/raw/ghc
+      dataset_name: ghc
+      gcp_project_id: end-to-end-ml-419116
+      gcp_github_access_token_secret_id: cybull-data-github-access-token
+      dvc_remote_repo: https://github.com/GudlaArunKumar/cyberbulling_detection_data.git
+      github_user_name: GudlaArunKumar
+      version: v3
+      val_split_ratio: 0.3
+    jtc:
+      _target_: cybulldetection.data_processing.dataset_readers.JigsawToxicCommentsDatasetReader
+      dataset_dir: ./data/raw/jigsaw-toxic-comments
+      dataset_name: jtc
+      gcp_project_id: end-to-end-ml-419116
+      gcp_github_access_token_secret_id: cybull-data-github-access-token
+      dvc_remote_repo: https://github.com/GudlaArunKumar/cyberbulling_detection_data.git
+      github_user_name: GudlaArunKumar
+      version: v3
+      val_split_ratio: 0.03
+    twitter:
+      _target_: cybulldetection.data_processing.dataset_readers.TwitterDatasetReader
+      dataset_dir: ./data/raw/twitter
+      dataset_name: twitter
+      gcp_project_id: end-to-end-ml-419116
+      gcp_github_access_token_secret_id: cybull-data-github-access-token
+      dvc_remote_repo: https://github.com/GudlaArunKumar/cyberbulling_detection_data.git
+      github_user_name: GudlaArunKumar
+      version: v3
+      val_split_ratio: 0.125
+      test_split_ratio: 0.1
+  repartition: true
+  available_memory: 3750000000.0
+dataset_cleaner_manager:
+  _target_: cybulldetection.data_processing.dataset_cleaners.DatasetCleanerManager
+  dataset_cleaners:
+    stop_words:
+      _target_: cybulldetection.data_processing.dataset_cleaners.StopWordsDatasetCleaner
+    lower_case:
+      _target_: cybulldetection.data_processing.dataset_cleaners.LowerCaseDatasetCleaner
+    url:
+      _target_: cybulldetection.data_processing.dataset_cleaners.URLDatasetCleaner
+    punctuation:
+      _target_: cybulldetection.data_processing.dataset_cleaners.PunctuationDatasetCleaner
+      punctuation: '!"#$%&''()*+,-./:;<=>?@[\]^_`{|}~'
+    non_letters:
+      _target_: cybulldetection.data_processing.dataset_cleaners.NonLettersDatasetCleaner
+    new_line:
+      _target_: cybulldetection.data_processing.dataset_cleaners.NewLineCharacterDatasetCleaner
+    non_ascii:
+      _target_: cybulldetection.data_processing.dataset_cleaners.NonASCIIDatasetCleaner
+    referance:
+      _target_: cybulldetection.data_processing.dataset_cleaners.ReferanceToAccountDatasetCleaner
+    re_tweet:
+      _target_: cybulldetection.data_processing.dataset_cleaners.ReTweetDatasetCleaner
+dask_cluster:
+  _target_: dask_cloudprovider.gcp.GCPCluster
+  n_workers: 3
+  projectid: end-to-end-ml-419116
+  zone: europe-west4-b
+  network: default
+  network_projectid: end-to-end-ml-419116
+  machine_type: n1-standard-1
+  source_image: projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20220203
+  docker_image: europe-west4-docker.pkg.dev/end-to-end-ml-419116/cybull-detection/cybull-data-processing:3f91e67e-542b-4b6d-b620-ea371fb6c09c
+  docker_args: '--log-driver=gcplogs
+
+    '
+  extra_bootstrap:
+  - gcloud auth configure-docker --quiet europe-west4-docker.pkg.dev
+  ngpus: 0
+  gpu_type: null
+  filesystem_size: 50
+  disk_type: pd-standard
+  on_host_maintenance: TERMINATE
+  worker_class: dask.distributed.Nanny
+  worker_options:
+    nthreads: 1
+  env_vars: {}
+  scheduler_options: {}
+  silence_logs: null
+  asynchronous: null
+  security: true
+  preemptible: false
+  debug: false
+  instance_labels: null
+processed_data_save_dir: gs://cybull_detection/data/processed/rebalanced_val_test_splits
+run_tag: rebalanced_val_test_splits
+min_no_of_words: 2
+docker_image_name: europe-west4-docker.pkg.dev/end-to-end-ml-419116/cybull-detection/cybull-data-processing
+docker_image_tag: 3f91e67e-542b-4b6d-b620-ea371fb6c09c

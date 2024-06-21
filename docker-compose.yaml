@@ -4,8 +4,10 @@ services:
   app:
     user: "${USER_ID:-1000}"
     hostname: "${HOST_NAME:-arun}"
-    image: cybulde-data-preparation
-    container_name: cybulde-data-preparation-container
+    image: cybulde-data-processing
+    container_name: cybulde-data-processing-container
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=./creds/end-to-end-ml-419116-301079c6ad5a.json
     build:
       context: .
       dockerfile: ./docker/Dockerfile
